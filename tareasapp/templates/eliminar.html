@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Tarea</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f9;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 {
+            color: #d93025;
+            margin-top: 0;
+        }
+        p {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .btn-danger {
+            background-color: #d93025;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #b31412;
+        }
+        .btn-secondary {
+            background-color: #f1f3f4;
+            color: #3c4043;
+        }
+        .btn-secondary:hover {
+            background-color: #e8eaed;
+        }
+        .mensaje {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 6px;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .mensaje.error {
+            background-color: #ffebe9;
+            color: #d93025;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>¿Eliminar tarea?</h2>
+    <p>Estás a punto de eliminar esta tarea de forma permanente. Esta acción no se puede deshacer.</p>
+    
+    <div class="btn-group">
+        <button id="btnEliminar" class="btn btn-danger">Sí, eliminar</button>
+        <a href="/" class="btn btn-secondary">Cancelar</a>
+    </div>
+
+    <div id="mensaje" class="mensaje"></div>
+</div>
+
+<script>
+    document.getElementById('btnEliminar').addEventListener('click', async function() {
+        const token = localStorage.getItem('token');
+        const mensajeDiv = document.getElementById('mensaje');
+
+        if (!token) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        const pathSegments = window.location.pathname.split('/');
+        const tareaId = pathSegments[pathSegments.length - 2] || pathSegments[pathSegments.length - 1];
+
+        try {
+            const response = await fetch(`/api/v1/tareas/${tareaId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Token ' + token.trim(),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                mensajeDiv.innerText = 'Error al intentar eliminar la tarea.';
+                mensajeDiv.className = 'mensaje error';
+                mensajeDiv.style.display = 'block';
+            }
+        } catch (error) {
+            mensajeDiv.innerText = 'Error de conexión con el servidor.';
+            mensajeDiv.className = 'mensaje error';
+            mensajeDiv.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

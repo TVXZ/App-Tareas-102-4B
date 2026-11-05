@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tareas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f9;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        h2 {
+            color: #1a73e8;
+            margin: 0;
+        }
+        .btn {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn:hover {
+            background-color: #1557b0;
+        }
+        .btn-danger {
+            background-color: #d93025;
+        }
+        .btn-danger:hover {
+            background-color: #b31412;
+        }
+        .btn-warning {
+            background-color: #f9ab00;
+        }
+        .btn-warning:hover {
+            background-color: #e09b00;
+        }
+        .btn-logout {
+            background-color: #d93025;
+        }
+        .btn-logout:hover {
+            background-color: #b31412;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #1a73e8;
+        }
+        li.completada {
+            border-left-color: #137333;
+            background: #e6f4ea;
+        }
+        .task-info h4 {
+            margin: 0 0 0.3rem 0;
+            color: #202124;
+        }
+        .task-info p {
+            margin: 0;
+            color: #5f6368;
+            font-size: 0.9rem;
+        }
+        .actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .mensaje {
+            text-align: center;
+            color: #666;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>📝 Mis Tareas</h2>
+        <div>
+            <a href="/crear/" class="btn">+ Nueva tarea</a>
+            <button id="btnSalir" class="btn btn-logout">Salir</button>
+        </div>
+    </div>
+
+    <div id="loading" class="mensaje">Cargando tareas...</div>
+    
+    <ul id="lista-tareas"></ul>
+
+    <div id="sin-tareas" class="mensaje" style="display: none;">No hay tareas creadas todavía.</div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/tareas/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Token ' + token.trim(),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const tareas = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                const lista = document.getElementById('lista-tareas');
+                if (tareas.length === 0) {
+                    document.getElementById('sin-tareas').style.display = 'block';
+                    return;
+                }
+
+                tareas.forEach(tarea => {
+                    const li = document.createElement('li');
+                    if (tarea.completada) {
+                        li.classList.add('completada');
+                    }
+
+                    li.innerHTML = `
+                        <div class="task-info">
+                            <h4>${tarea.titulo}</h4>
+                            <p>${tarea.descripcion || 'Sin descripción'}</p>
+                        </div>
+                        <div class="actions">
+                            <a href="/detalle/${tarea.id}/" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">Ver</a>
+                            <a href="/editar/${tarea.id}/" class="btn btn-warning" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; color: white;">Editar</a>
+                            <a href="/eliminar/${tarea.id}/" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.8rem;">Borrar</a>
+                        </div>
+                    `;
+                    lista.appendChild(li);
+                });
+            } else {
+                localStorage.clear();
+                window.location.href = '/login/';
+            }
+        } catch (error) {
+            document.getElementById('loading').innerText = 'Error de conexión con el servidor.';
+        }
+    });
+
+    document.getElementById('btnSalir').addEventListener('click', function() {
+        localStorage.clear();
+        window.location.href = '/login/';
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Tarea</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f9;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+        }
+        .btn {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #1557b0;
+        }
+        .mensaje {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 6px;
+            text-align: center;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .mensaje.error {
+            background-color: #ffebe9;
+            color: #d93025;
+        }
+        .back-link {
+            display: block;
+            margin-top: 1.5rem;
+            text-align: center;
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Editar Tarea</h2>
+    
+    <div id="loading" class="mensaje" style="display: block; color: #555;">Cargando datos de la tarea...</div>
+
+    <form id="editarForm" style="display: none;">
+        <div class="form-group">
+            <label for="titulo">Título:</label>
+            <input type="text" id="titulo" name="titulo" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion"></textarea>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="completada" name="completada">
+            <label for="completada" style="margin-bottom: 0;">Tarea completada</label>
+        </div>
+
+        <button type="submit" class="btn">Actualizar Tarea</button>
+    </form>
+
+    <div id="mensaje" class="mensaje"></div>
+
+    <a href="/" class="back-link">Volver al inicio</a>
+</div>
+
+<script>
+    let tareaId = null;
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        const pathSegments = window.location.pathname.split('/');
+        tareaId = pathSegments[pathSegments.length - 2] || pathSegments[pathSegments.length - 1];
+
+        try {
+            const response = await fetch(`/api/v1/tareas/${tareaId}/`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Token ' + token.trim(),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const tarea = await response.json();
+                document.getElementById('titulo').value = tarea.titulo;
+                document.getElementById('descripcion').value = tarea.descripcion || '';
+                document.getElementById('completada').checked = tarea.completada;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('editarForm').style.display = 'block';
+            } else {
+                document.getElementById('loading').innerText = 'No se pudo cargar la tarea.';
+                document.getElementById('loading').className = 'mensaje error';
+            }
+        } catch (error) {
+            document.getElementById('loading').innerText = 'Error de conexión con el servidor.';
+            document.getElementById('loading').className = 'mensaje error';
+        }
+    });
+
+    document.getElementById('editarForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        const mensajeDiv = document.getElementById('mensaje');
+
+        const titulo = document.getElementById('titulo').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const completada = document.getElementById('completada').checked;
+
+        try {
+            const response = await fetch(`/api/v1/tareas/${tareaId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Token ' + token.trim(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    titulo: titulo,
+                    descripcion: descripcion,
+                    completada: completada
+                })
+            });
+
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                const errData = await response.json();
+                mensajeDiv.innerText = 'Error al actualizar: ' + JSON.stringify(errData);
+                mensajeDiv.className = 'mensaje error';
+                mensajeDiv.style.display = 'block';
+            }
+        } catch (error) {
+            mensajeDiv.innerText = 'Error de conexión con el servidor.';
+            mensajeDiv.className = 'mensaje error';
+            mensajeDiv.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

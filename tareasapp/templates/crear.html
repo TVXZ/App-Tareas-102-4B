@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear nueva tarea</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f9;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+        }
+        .btn {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #1557b0;
+        }
+        .mensaje {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 6px;
+            text-align: left;
+            display: none;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        .mensaje.error {
+            background-color: #ffebe9;
+            color: #d93025;
+        }
+        .back-link {
+            display: block;
+            margin-top: 1.5rem;
+            text-align: center;
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Crear nueva tarea</h2>
+    
+    <form id="crearForm">
+        <div class="form-group">
+            <label for="titulo">Título:</label>
+            <input type="text" id="titulo" name="titulo" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion"></textarea>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="completada" name="completada">
+            <label for="completada" style="margin-bottom: 0;">Tarea completada</label>
+        </div>
+
+        <button type="submit" class="btn">Guardar tarea</button>
+    </form>
+
+    <div id="mensaje" class="mensaje"></div>
+
+    <a href="/" class="back-link">Volver al inicio</a>
+</div>
+
+<script>
+    document.getElementById('crearForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const token = localStorage.getItem('token');
+        const mensajeDiv = document.getElementById('mensaje');
+
+        if (!token || token === 'undefined' || token === 'null') {
+            mensajeDiv.innerText = 'No hay sesión activa. Redirigiendo al login...';
+            mensajeDiv.className = 'mensaje error';
+            mensajeDiv.style.display = 'block';
+            localStorage.clear();
+            setTimeout(() => { window.location.href = '/login/'; }, 1500);
+            return;
+        }
+
+        const titulo = document.getElementById('titulo').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const completada = document.getElementById('completada').checked;
+
+        try {
+            const response = await fetch('/api/v1/tareas/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Token ' + token.trim(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    titulo: titulo,
+                    descripcion: descripcion,
+                    completada: completada
+                })
+            });
+
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                const errData = await response.json();
+                mensajeDiv.innerText = 'Error del servidor: ' + JSON.stringify(errData);
+                mensajeDiv.className = 'mensaje error';
+                mensajeDiv.style.display = 'block';
+            }
+        } catch (error) {
+            mensajeDiv.innerText = 'Error de conexión con el servidor.';
+            mensajeDiv.className = 'mensaje error';
+            mensajeDiv.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

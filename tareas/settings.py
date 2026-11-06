@@ -72,12 +72,13 @@ WSGI_APPLICATION = 'tareas.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tareasbd',
+        'NAME': 'tareasbd_nueva',
         'USER': 'root',
-        'PASSWORD': '',  
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
     }
+
 }
 
 
@@ -130,6 +131,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ]
 }

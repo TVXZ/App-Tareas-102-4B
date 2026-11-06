@@ -3,205 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Tarea</title>
+    <title>Editar Ticket - HelpDesk</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f9;
-            margin: 0;
-            padding: 2rem;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #1a73e8;
-            margin-top: 0;
-        }
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-            color: #333;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 0.6rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        textarea {
-            resize: vertical;
-            height: 100px;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.2rem;
-        }
-        .checkbox-group input {
-            width: 18px;
-            height: 18px;
-        }
-        .btn {
-            background-color: #1a73e8;
-            color: white;
-            padding: 0.7rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-        .btn:hover {
-            background-color: #1557b0;
-        }
-        .mensaje {
-            margin-top: 1rem;
-            padding: 0.8rem;
-            border-radius: 6px;
-            text-align: center;
-            display: none;
-            font-size: 0.9rem;
-        }
-        .mensaje.error {
-            background-color: #ffebe9;
-            color: #d93025;
-        }
-        .back-link {
-            display: block;
-            margin-top: 1.5rem;
-            text-align: center;
-            color: #1a73e8;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .card { background: white; padding: 35px; border-radius: 10px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { font-size: 1.5rem; color: #1e293b; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; color: #475569; font-weight: 600; font-size: 0.9rem; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+        textarea { resize: vertical; height: 100px; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; }
+        .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn { padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; font-size: 0.9rem; }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-secondary { background-color: #94a3b8; color: white; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h2>Actualizar Incidencia</h2>
+        <form id="editarForm">
+            <div class="form-group">
+                <label for="titulo">Asunto:</label>
+                <input type="text" id="titulo" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="descripcion">Detalles del problema:</label>
+                <textarea id="descripcion"></textarea>
+            </div>
 
-<div class="container">
-    <h2>Editar Tarea</h2>
-    
-    <div id="loading" class="mensaje" style="display: block; color: #555;">Cargando datos de la tarea...</div>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="completada">
+                <label for="completada" style="margin-bottom:0;">Marcar como Incidencia Resuelta</label>
+            </div>
 
-    <form id="editarForm" style="display: none;">
-        <div class="form-group">
-            <label for="titulo">Título:</label>
-            <input type="text" id="titulo" name="titulo" required>
-        </div>
+            <div class="actions">
+                <a href="/" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Actualizar Ticket</button>
+            </div>
+        </form>
+    </div>
 
-        <div class="form-group">
-            <label for="descripcion">Descripción:</label>
-            <textarea id="descripcion" name="descripcion"></textarea>
-        </div>
-
-        <div class="checkbox-group">
-            <input type="checkbox" id="completada" name="completada">
-            <label for="completada" style="margin-bottom: 0;">Tarea completada</label>
-        </div>
-
-        <button type="submit" class="btn">Actualizar Tarea</button>
-    </form>
-
-    <div id="mensaje" class="mensaje"></div>
-
-    <a href="/" class="back-link">Volver al inicio</a>
-</div>
-
-<script>
-    let tareaId = null;
-
-    document.addEventListener("DOMContentLoaded", async function() {
+    <script>
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login/';
-            return;
-        }
+        if (!token) window.location.href = '/login/';
 
-        const pathSegments = window.location.pathname.split('/');
-        tareaId = pathSegments[pathSegments.length - 2] || pathSegments[pathSegments.length - 1];
+        const ticketId = "{{ id }}";
 
-        try {
-            const response = await fetch(`/api/v1/tareas/${tareaId}/`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Token ' + token.trim(),
-                    'Content-Type': 'application/json'
-                }
+        async function cargarDatos() {
+            const res = await fetch(`/api/v1/tareas/${ticketId}/`, {
+                headers: { 'Authorization': `Token ${token}` }
             });
-
-            if (response.ok) {
-                const tarea = await response.json();
-                document.getElementById('titulo').value = tarea.titulo;
-                document.getElementById('descripcion').value = tarea.descripcion || '';
-                document.getElementById('completada').checked = tarea.completada;
-
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('editarForm').style.display = 'block';
-            } else {
-                document.getElementById('loading').innerText = 'No se pudo cargar la tarea.';
-                document.getElementById('loading').className = 'mensaje error';
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('titulo').value = data.titulo;
+                document.getElementById('descripcion').value = data.descripcion || '';
+                document.getElementById('completada').checked = data.completada;
             }
-        } catch (error) {
-            document.getElementById('loading').innerText = 'Error de conexión con el servidor.';
-            document.getElementById('loading').className = 'mensaje error';
         }
-    });
 
-    document.getElementById('editarForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const token = localStorage.getItem('token');
-        const mensajeDiv = document.getElementById('mensaje');
+        document.getElementById('editarForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('titulo').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const completada = document.getElementById('completada').checked;
 
-        const titulo = document.getElementById('titulo').value;
-        const descripcion = document.getElementById('descripcion').value;
-        const completada = document.getElementById('completada').checked;
-
-        try {
-            const response = await fetch(`/api/v1/tareas/${tareaId}/`, {
+            const res = await fetch(`/api/v1/tareas/${ticketId}/`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': 'Token ' + token.trim(),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
                 },
-                body: JSON.stringify({
-                    titulo: titulo,
-                    descripcion: descripcion,
-                    completada: completada
-                })
+                body: JSON.stringify({ titulo, descripcion, completada })
             });
 
-            if (response.ok) {
+            if (res.ok) {
                 window.location.href = '/';
             } else {
-                const errData = await response.json();
-                mensajeDiv.innerText = 'Error al actualizar: ' + JSON.stringify(errData);
-                mensajeDiv.className = 'mensaje error';
-                mensajeDiv.style.display = 'block';
+                alert('Error al actualizar la incidencia.');
             }
-        } catch (error) {
-            mensajeDiv.innerText = 'Error de conexión con el servidor.';
-            mensajeDiv.className = 'mensaje error';
-            mensajeDiv.style.display = 'block';
-        }
-    });
-</script>
+        });
 
+        cargarDatos();
+    </script>
 </body>
 </html>
